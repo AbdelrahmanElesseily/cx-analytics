@@ -1,31 +1,32 @@
 .panel {
-  width: 240px;
-  min-width: 240px;
+  width: 188px;
+  min-width: 188px;
   background: var(--surface);
   border-right: 1px solid var(--border);
-  height: calc(100vh - 60px);
+  height: 100%;
   overflow-y: auto;
-  padding: 16px 0 40px;
+  padding: 14px 0 40px;
   display: flex;
   flex-direction: column;
   gap: 0;
+  flex-shrink: 0;
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px 12px;
+  padding: 0 12px 10px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .title {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 500;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -34,9 +35,46 @@
 .reset {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: none;
   border: 1px solid var(--border-2);
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-family: var(--font-body);
+  padding: 2px 6px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.reset:hover { border-color: var(--red); color: var(--red); }
+
+.section {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionLabel {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: 10px;
   font-family: var(--font-body);
@@ -44,165 +82,23 @@
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.15s;
-}
-.reset:hover {
-  border-color: var(--red);
-  color: var(--red);
-}
-
-/* ── Section ──────────────────────────────────────────── */
-.section {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sectionLabel {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 8px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-/* ── Chip ──────────────────────────────────────────────── */
-.chip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-family: var(--font-body);
-  padding: 4px 10px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.15s;
   text-align: left;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
+  line-height: 1.3;
 }
-
 .chip:not(.chipActive):hover {
   border-color: var(--border-2);
   color: var(--text-primary);
 }
-
 .chipActive {
   background: var(--gold-glow);
   border-color: var(--gold-dim);
   color: var(--gold);
-}
-
-.chipSub {
-  font-size: 9px;
-  color: var(--text-tertiary);
-  display: block;
-  font-weight: 300;
+  font-weight: 500;
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
-  display: inline-block;
-  margin-right: 2px;
-}
-
-/* re-inline chip with dot */
-.chip:has(.dot) {
-  flex-direction: row;
-  align-items: center;
-}
-
-/* ── Date / number inputs ─────────────────────────────── */
-.dateRow {
-  display: flex;
-  gap: 8px;
-}
-
-.dateLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  font-size: 10px;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.dateInput {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 6px 8px;
-  border-radius: var(--r-sm);
-  width: 100%;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.dateInput:focus {
-  border-color: var(--gold-dim);
-}
-.dateInput::-webkit-calendar-picker-indicator {
-  filter: invert(0.5);
-  cursor: pointer;
-}
-
-/* ── Toggle ───────────────────────────────────────────── */
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  user-select: none;
-}
-
-.toggle input { display: none; }
-
-.toggleTrack {
-  width: 32px;
-  height: 18px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
-  border-radius: 9px;
-  position: relative;
-  transition: background 0.2s, border-color 0.2s;
-  flex-shrink: 0;
-}
-
-.toggle input:checked + .toggleTrack {
-  background: var(--gold-glow);
-  border-color: var(--gold-dim);
-}
-
-.toggleThumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--text-tertiary);
-  transition: transform 0.2s, background 0.2s;
-}
-
-.toggle input:checked + .toggleTrack .toggleThumb {
-  transform: translateX(14px);
-  background: var(--gold);
 }

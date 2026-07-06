@@ -1,4 +1,5 @@
 import { X, SlidersHorizontal } from 'lucide-react'
+
 import { QUARTERS, SOURCES_FB, SOURCES_IM, CHANNELS_FB, CHANNELS_IM, CX_STAGES, SERVICES, RATINGS } from '../../data/mockData'
 import styles from './FilterPanel.module.css'
 

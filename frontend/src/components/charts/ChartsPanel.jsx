@@ -33,6 +33,21 @@ const tip = {
 const axisLight = { fill: '#9CA3AF', fontSize: 11 }
 const axisGrey  = { fill: '#D1D5DB', fontSize: 11 }
 
+function WrappedTick({ x, y, payload, width }) {
+  const words = payload.value.split(' ')
+  const mid = Math.ceil(words.length / 2)
+  const line1 = words.slice(0, mid).join(' ')
+  const line2 = words.slice(mid).join(' ')
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#9CA3AF" fontSize={9}>
+        <tspan x={0} dy={0}>{line1}</tspan>
+        {line2 && <tspan x={0} dy={11}>{line2}</tspan>}
+      </text>
+    </g>
+  )
+}
+
 export default function ChartsPanel({ filteredFeedback, filteredImprovements }) {
   const ratingByChannel = useMemo(() => {
     const map = {}
@@ -102,8 +117,8 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <span className={styles.cardBadge} style={{color:GOLD,background:'rgba(184,134,11,0.08)',border:'1px solid rgba(184,134,11,0.2)'}}>Rating</span>
         </div>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={ratingByChannel} margin={{left:-8,right:8,top:8,bottom:24}} barCategoryGap="35%">
-            <XAxis dataKey="name" tick={{...axisLight,textAnchor:'middle'}} axisLine={false} tickLine={false} interval={0} angle={0}/>
+          <BarChart data={ratingByChannel} margin={{left:-8,right:8,top:8,bottom:8}} barCategoryGap="35%">
+            <XAxis dataKey="name" tick={<WrappedTick/>} axisLine={false} tickLine={false} interval={0} height={44}/>
             <YAxis domain={[0,5]} tick={axisLight} axisLine={false} tickLine={false} width={24}/>
             <Tooltip formatter={v=>[v,'Avg Rating']} contentStyle={tip} cursor={{fill:'rgba(184,134,11,0.04)'}}/>
             <Bar dataKey="avg" fill={GOLD} radius={[6,6,0,0]}/>
