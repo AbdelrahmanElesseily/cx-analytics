@@ -6,6 +6,7 @@ import FilterPanel    from './components/filters/FilterPanel'
 import ChartsPanel    from './components/charts/ChartsPanel'
 import DataTables     from './components/table/ReservationsTable'
 import AiChat         from './components/chat/AiChat'
+import ReportPanel    from './components/report/ReportPanel'
 import { useFilters } from './hooks/useFilters'
 import styles         from './App.module.css'
 
@@ -13,10 +14,28 @@ export default function App() {
   const [view,      setView]      = useState('charts')
   const [activeTab, setActiveTab] = useState('improvements')
 
+  // Report items lifted here so both AiChat (floating) and ReportPanel (sidebar) share the same state
+  const [reportItems, setReportItems] = useState([])
+
   const {
     filters, filteredFeedback, filteredImprovements, kpis,
     updateFilter, toggleArray, resetFilters, activeCount,
   } = useFilters()
+
+  function addToReport(msg) {
+    setReportItems(prev => {
+      if (prev.find(i => i.msgId === msg.id)) return prev
+      return [...prev, { msgId: msg.id, question: msg.question, mode: msg.mode, data: msg.data }]
+    })
+  }
+
+  function removeFromReport(msgId) {
+    setReportItems(prev => prev.filter(i => i.msgId !== msgId))
+  }
+
+  function clearReport() {
+    setReportItems([])
+  }
 
   return (
     <div className={styles.root}>
@@ -56,9 +75,17 @@ export default function App() {
           </div>
         </main>
 
-        {/* Right — AI chat panel (always visible) */}
-        <AiChat />
+        {/* Right — permanent report panel */}
+        <ReportPanel
+          items={reportItems}
+          onRemove={removeFromReport}
+          onClear={clearReport}
+        />
+
       </div>
+
+      {/* Floating AI chat bubble (outside body flow) */}
+      <AiChat reportItems={reportItems} onAddToReport={addToReport} />
     </div>
   )
 }

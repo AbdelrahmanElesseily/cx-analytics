@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Send, RotateCcw, Database, BookOpen, FileText, Plus, Download, Trash2, ChevronLeft } from 'lucide-react'
+import { X, Send, RotateCcw, Database, BookOpen, MessageCircle } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import styles from './AiChat.module.css'
 
@@ -31,20 +31,6 @@ async function callAPI(question) {
     throw new Error(err.detail || 'API error')
   }
   return res.json()
-}
-
-async function downloadReport(items) {
-  const res = await fetch('http://localhost:8000/api/report', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items: items.map(i => ({ question: i.question, mode: i.mode, data: i.data })) }),
-  })
-  if (!res.ok) throw new Error('Failed to generate report')
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = 'cx-report.docx'; a.click()
-  URL.revokeObjectURL(url)
 }
 
 function detectChartData(data) {
@@ -145,9 +131,9 @@ function NlqAnswer({ data }) {
   )
 }
 
-function Message({ msg, onAddToReport, reportMenu, setReportMenu }) {
-  const isUser  = msg.role === 'user'
-  const isAi    = msg.role === 'ai' && msg.mode !== 'error'
+function Message({ msg, inReport, onAddToReport, reportMenu, setReportMenu }) {
+  const isUser = msg.role === 'user'
+  const isAi   = msg.role === 'ai' && msg.mode !== 'error'
   const menuOpen = reportMenu === msg.id
 
   if (isUser) {
@@ -179,22 +165,13 @@ function Message({ msg, onAddToReport, reportMenu, setReportMenu }) {
 
         {isAi && (
           <div className={styles.reportBtnRow}>
-            <div className={styles.reportMenuWrap}>
-              <button
-                className={`${styles.addReportBtn} ${msg.inReport ? styles.addReportBtnAdded : ''}`}
-                onClick={e => { if (msg.inReport) return; e.stopPropagation(); setReportMenu(menuOpen ? null : msg.id) }}
-                title={msg.inReport ? 'Added to report' : 'Add to report'}
-              >
-                <FileText size={9}/>
-                {msg.inReport ? '✓ In report' : '+ Report'}
-              </button>
-              {menuOpen && !msg.inReport && (
-                <div className={styles.reportMenu} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => onAddToReport(msg, 'current')}><Plus size={9}/> Add to current report</button>
-                  <button onClick={() => onAddToReport(msg, 'new')}><Trash2 size={9}/> Start new report</button>
-                </div>
-              )}
-            </div>
+            <button
+              className={`${styles.addReportBtn} ${inReport ? styles.addReportBtnAdded : ''}`}
+              onClick={() => { if (!inReport) onAddToReport(msg) }}
+              title={inReport ? 'Added to report' : 'Add to report'}
+            >
+              {inReport ? '✓ In report' : '+ Report'}
+            </button>
           </div>
         )}
       </div>
@@ -202,56 +179,20 @@ function Message({ msg, onAddToReport, reportMenu, setReportMenu }) {
   )
 }
 
-function ReportPanel({ items, onBack, onRemove, onClear }) {
-  const [downloading, setDownloading] = useState(false)
-  const [dlError, setDlError] = useState(null)
-
-  async function handleDownload() {
-    setDownloading(true); setDlError(null)
-    try { await downloadReport(items) }
-    catch (e) { setDlError(e.message) }
-    finally { setDownloading(false) }
-  }
-
-  return (
-    <div className={styles.reportPanel}>
-      <div className={styles.reportList}>
-        {items.length === 0 && <p className={styles.reportEmpty}>No items yet. Add answers from the chat.</p>}
-        {items.map((item, i) => (
-          <div key={item.msgId} className={styles.reportItem}>
-            <div className={styles.reportItemHeader}>
-              <span className={styles.reportItemNum}>Q{i + 1}</span>
-              <button className={styles.reportRemoveBtn} onClick={() => onRemove(item.msgId)}><X size={9}/></button>
-            </div>
-            <p className={styles.reportItemQ}>{item.question}</p>
-            <p className={styles.reportItemMode}>{item.mode === 'rag' ? 'RAG insight' : 'SQL result'}</p>
-          </div>
-        ))}
-      </div>
-      <div className={styles.reportFooter}>
-        {dlError && <p className={styles.reportDlError}>{dlError}</p>}
-        <div className={styles.reportFooterBtns}>
-          <button className={styles.reportClearBtn} onClick={onClear} disabled={items.length === 0}><Trash2 size={10}/> Clear</button>
-          <button className={`${styles.reportDlBtn} ${items.length === 0 ? styles.reportDlBtnDisabled : ''}`} onClick={handleDownload} disabled={items.length === 0 || downloading}>
-            <Download size={11}/> {downloading ? 'Generating…' : 'Download .docx'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default function AiChat() {
-  const [input,       setInput]       = useState('')
-  const [messages,    setMessages]    = useState([])
-  const [loading,     setLoading]     = useState(false)
-  const [reportItems, setReportItems] = useState([])
-  const [showReport,  setShowReport]  = useState(false)
-  const [reportMenu,  setReportMenu]  = useState(null)
+export default function AiChat({ reportItems, onAddToReport }) {
+  const [open,     setOpen]     = useState(false)
+  const [input,    setInput]    = useState('')
+  const [messages, setMessages] = useState([])
+  const [loading,  setLoading]  = useState(false)
+  const [reportMenu, setReportMenu] = useState(null)
   const bottomRef = useRef(null)
   const inputRef  = useRef(null)
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
+
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 80)
+  }, [open])
 
   useEffect(() => {
     if (!reportMenu) return
@@ -268,7 +209,7 @@ export default function AiChat() {
     setLoading(true)
     try {
       const data = await callAPI(question)
-      setMessages(prev => [...prev, { role: 'ai', id: Date.now() + 1, mode: data.mode, data, question, inReport: false }])
+      setMessages(prev => [...prev, { role: 'ai', id: Date.now() + 1, mode: data.mode, data, question }])
     } catch (err) {
       setMessages(prev => [...prev, { role: 'ai', id: Date.now() + 1, mode: 'error', error: err.message }])
     } finally {
@@ -280,70 +221,46 @@ export default function AiChat() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
-  function addToReport(msg, mode) {
-    setReportMenu(null)
-    if (mode === 'new') {
-      setReportItems([])
-      setMessages(prev => prev.map(m => ({ ...m, inReport: false })))
-    }
-    setReportItems(prev => {
-      if (prev.find(i => i.msgId === msg.id)) return prev
-      return [...prev, { msgId: msg.id, question: msg.question, mode: msg.mode, data: msg.data }]
-    })
-    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, inReport: true } : m))
-  }
-
-  function removeFromReport(msgId) {
-    setReportItems(prev => prev.filter(i => i.msgId !== msgId))
-    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, inReport: false } : m))
-  }
-
-  function clearReport() {
-    setReportItems([])
-    setMessages(prev => prev.map(m => ({ ...m, inReport: false })))
-  }
-
   return (
-    <aside className={styles.panel}>
-      {/* Header */}
-      <div className={styles.panelHeader}>
-        <div className={styles.panelTitle}>
-          {showReport ? (
-            <>
-              <button className={styles.backBtn} onClick={() => setShowReport(false)}><ChevronLeft size={14}/></button>
-              <div>
-                <span className={styles.panelName}>Report</span>
-                <span className={styles.panelSub}>{reportItems.length} item{reportItems.length !== 1 ? 's' : ''} · .docx</span>
-              </div>
-            </>
-          ) : (
-            <>
+    <>
+      {/* Floating pill */}
+      <button
+        className={`${styles.pill} ${open ? styles.pillOpen : ''}`}
+        onClick={() => setOpen(o => !o)}
+        title="Ask AI"
+      >
+        {open ? <X size={16}/> : <MessageCircle size={16}/>}
+        {!open && <span className={styles.pillLabel}>Ask AI</span>}
+        {!open && reportItems.length > 0 && (
+          <span className={styles.pillBadge}>{reportItems.length}</span>
+        )}
+      </button>
+
+      {/* Chat popup */}
+      {open && (
+        <div className={styles.popup}>
+          {/* Header */}
+          <div className={styles.popupHeader}>
+            <div className={styles.panelTitle}>
               <span className={styles.panelIcon}>◈</span>
               <div>
                 <span className={styles.panelName}>CX Assistant</span>
-                <span className={styles.panelSub}>NLQ · RAG · Charts · Reports</span>
+                <span className={styles.panelSub}>NLQ · RAG · Inline Charts</span>
               </div>
-            </>
-          )}
-        </div>
-        <div className={styles.panelActions}>
-          {!showReport && reportItems.length > 0 && (
-            <button className={styles.reportHeaderBtn} onClick={() => setShowReport(true)} title="View report">
-              <FileText size={12}/>
-              <span className={styles.reportHeaderCount}>{reportItems.length}</span>
-            </button>
-          )}
-          {!showReport && messages.length > 0 && (
-            <button className={styles.clearBtn} onClick={() => setMessages([])} title="Clear chat"><RotateCcw size={12}/></button>
-          )}
-        </div>
-      </div>
+            </div>
+            <div className={styles.panelActions}>
+              {messages.length > 0 && (
+                <button className={styles.clearBtn} onClick={() => setMessages([])} title="Clear chat">
+                  <RotateCcw size={12}/>
+                </button>
+              )}
+              <button className={styles.closeBtn} onClick={() => setOpen(false)}>
+                <X size={14}/>
+              </button>
+            </div>
+          </div>
 
-      {/* Body */}
-      {showReport ? (
-        <ReportPanel items={reportItems} onBack={() => setShowReport(false)} onRemove={removeFromReport} onClear={clearReport}/>
-      ) : (
-        <>
+          {/* Thread */}
           <div className={styles.thread}>
             {messages.length === 0 && (
               <div className={styles.emptyState}>
@@ -362,16 +279,10 @@ export default function AiChat() {
               <Message
                 key={msg.id}
                 msg={msg}
-                onAddToReport={addToReport}
+                inReport={reportItems.some(i => i.msgId === msg.id)}
+                onAddToReport={m => onAddToReport(m)}
                 reportMenu={reportMenu}
-                setReportMenu={id => {
-                  if (id !== null && reportItems.length === 0) {
-                    const m = messages.find(m => m.id === id)
-                    if (m) addToReport(m, 'current')
-                  } else {
-                    setReportMenu(id)
-                  }
-                }}
+                setReportMenu={setReportMenu}
               />
             ))}
 
@@ -386,6 +297,7 @@ export default function AiChat() {
             <div ref={bottomRef}/>
           </div>
 
+          {/* Input */}
           <div className={styles.inputRow}>
             <input
               ref={inputRef}
@@ -395,7 +307,6 @@ export default function AiChat() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
               disabled={loading}
-              autoFocus
             />
             <button
               className={`${styles.sendBtn} ${input.trim() ? styles.sendBtnActive : ''}`}
@@ -405,8 +316,8 @@ export default function AiChat() {
               <Send size={13}/>
             </button>
           </div>
-        </>
+        </div>
       )}
-    </aside>
+    </>
   )
 }

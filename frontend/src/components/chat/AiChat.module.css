@@ -1,18 +1,82 @@
-/* ── Panel (right sidebar — always visible) ──────────────────────────────── */
-.panel {
-  width: 300px;
-  min-width: 300px;
+/* ── Floating pill ───────────────────────────────────────────────────────── */
+.pill {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px 10px 14px;
+  border-radius: 50px;
+  border: 1px solid var(--gold-dim);
+  background: var(--gold-glow);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(184,134,11,0.18);
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  user-select: none;
+}
+.pill:hover {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold);
+  box-shadow: 0 6px 24px rgba(184,134,11,0.30);
+  transform: translateY(-2px);
+}
+.pillOpen {
+  padding: 10px 14px;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+}
+
+.pillLabel { line-height: 1; }
+
+.pillBadge {
+  background: var(--gold);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  margin-left: -2px;
+}
+
+/* ── Popup ───────────────────────────────────────────────────────────────── */
+.popup {
+  position: fixed;
+  bottom: 84px;
+  right: 28px;
+  z-index: 499;
+  width: 360px;
+  height: 520px;
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-left: 1px solid var(--border);
-  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.14);
   overflow: hidden;
-  flex-shrink: 0;
+  animation: popupIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes popupIn {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
-.panelHeader {
+.popupHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -57,7 +121,7 @@
 }
 
 .clearBtn,
-.backBtn {
+.closeBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,7 +135,7 @@
   transition: all 0.15s;
 }
 .clearBtn:hover { color: var(--amber); background: rgba(217,119,6,0.08); }
-.backBtn:hover  { color: var(--text-primary); background: var(--surface); }
+.closeBtn:hover { color: var(--text-primary); background: var(--surface); }
 
 /* ── Thread ──────────────────────────────────────────────────────────────── */
 .thread {
@@ -308,7 +372,6 @@
 
 /* ── Add to Report button ────────────────────────────────────────────────── */
 .reportBtnRow { display: flex; align-items: center; }
-.reportMenuWrap { position: relative; }
 
 .addReportBtn {
   display: inline-flex;
@@ -327,77 +390,7 @@
 .addReportBtn:hover { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow2); }
 .addReportBtnAdded { color: var(--green); border-color: rgba(5,150,105,0.3); background: rgba(5,150,105,0.06); cursor: default; }
 
-.reportMenu {
-  position: absolute;
-  bottom: calc(100% + 5px);
-  left: 0;
-  z-index: 400;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px;
-  min-width: 170px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.reportMenu button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 8px;
-  border-radius: 5px;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  font-size: 10px;
-  font-family: var(--font-body);
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.12s;
-}
-.reportMenu button:hover { background: var(--surface-2); color: var(--text-primary); }
-
-/* ── Report header button ────────────────────────────────────────────────── */
-.reportHeaderBtn {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 7px;
-  border-radius: 7px;
-  border: 1px solid var(--gold-dim);
-  background: var(--gold-glow2);
-  color: var(--gold);
-  font-size: 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.reportHeaderBtn:hover { background: var(--gold-glow); }
-.reportHeaderCount { font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
-
-/* ── Report panel ────────────────────────────────────────────────────────── */
-.reportPanel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.reportList { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-.reportEmpty { font-size: 11px; color: var(--text-tertiary); text-align: center; padding: 20px 0; }
-.reportItem { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
-.reportItemHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.reportItemNum { font-size: 8px; font-family: var(--font-mono); color: var(--gold); font-weight: 600; letter-spacing: 0.05em; }
-.reportRemoveBtn { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: none; border: none; color: var(--text-tertiary); border-radius: 4px; cursor: pointer; transition: all 0.12s; }
-.reportRemoveBtn:hover { color: var(--red); background: rgba(220,38,38,0.08); }
-.reportItemQ { font-size: 11px; color: var(--text-primary); line-height: 1.4; margin-bottom: 2px; }
-.reportItemMode { font-size: 8px; color: var(--text-tertiary); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
-
-.reportFooter { padding: 10px 12px; border-top: 1px solid var(--border); background: var(--surface-2); flex-shrink: 0; }
-.reportDlError { font-size: 10px; color: var(--red); margin-bottom: 6px; }
-.reportFooterBtns { display: flex; gap: 6px; align-items: center; }
-.reportClearBtn { display: flex; align-items: center; gap: 4px; padding: 7px 10px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text-tertiary); font-size: 10px; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; }
-.reportClearBtn:hover:not(:disabled) { color: var(--red); border-color: rgba(220,38,38,0.4); }
-.reportClearBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-.reportDlBtn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 12px; border-radius: 20px; border: 1px solid var(--gold-dim); background: var(--gold-glow); color: var(--gold); font-size: 11px; font-family: var(--font-body); font-weight: 500; cursor: pointer; transition: all 0.15s; }
-.reportDlBtn:hover:not(:disabled) { background: var(--gold); color: #fff; border-color: var(--gold); }
-.reportDlBtnDisabled, .reportDlBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-
 @media (prefers-reduced-motion: reduce) {
   .thinking span { animation: none; opacity: 0.5; }
+  .popup { animation: none; }
 }
