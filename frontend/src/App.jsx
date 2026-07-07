@@ -14,27 +14,57 @@ export default function App() {
   const [view,      setView]      = useState('charts')
   const [activeTab, setActiveTab] = useState('improvements')
 
-  // Report items lifted here so both AiChat (floating) and ReportPanel (sidebar) share the same state
-  const [reportItems, setReportItems] = useState([])
+  const [reports,        setReports]        = useState([{ id: 1, name: 'Report 1', items: [] }])
+  const [activeReportId, setActiveReportId] = useState(1)
 
   const {
     filters, filteredFeedback, filteredImprovements, kpis,
     updateFilter, toggleArray, resetFilters, activeCount,
   } = useFilters()
 
+  const activeReport = reports.find(r => r.id === activeReportId) || reports[0]
+
   function addToReport(msg) {
-    setReportItems(prev => {
-      if (prev.find(i => i.msgId === msg.id)) return prev
-      return [...prev, { msgId: msg.id, question: msg.question, mode: msg.mode, data: msg.data }]
-    })
+    setReports(prev => prev.map(r =>
+      r.id === activeReportId
+        ? r.items.find(i => i.msgId === msg.id)
+          ? r
+          : { ...r, items: [...r.items, { msgId: msg.id, question: msg.question, mode: msg.mode, data: msg.data }] }
+        : r
+    ))
   }
 
   function removeFromReport(msgId) {
-    setReportItems(prev => prev.filter(i => i.msgId !== msgId))
+    setReports(prev => prev.map(r =>
+      r.id === activeReportId
+        ? { ...r, items: r.items.filter(i => i.msgId !== msgId) }
+        : r
+    ))
   }
 
   function clearReport() {
-    setReportItems([])
+    setReports(prev => prev.map(r =>
+      r.id === activeReportId ? { ...r, items: [] } : r
+    ))
+  }
+
+  function addNewReport() {
+    const newId = Date.now()
+    setReports(prev => [...prev, { id: newId, name: `Report ${prev.length + 1}`, items: [] }])
+    setActiveReportId(newId)
+  }
+
+  function deleteReport(id) {
+    setReports(prev => {
+      const remaining = prev.filter(r => r.id !== id)
+      if (remaining.length === 0) {
+        const fresh = { id: Date.now(), name: 'Report 1', items: [] }
+        setActiveReportId(fresh.id)
+        return [fresh]
+      }
+      if (activeReportId === id) setActiveReportId(remaining[0].id)
+      return remaining
+    })
   }
 
   return (
@@ -42,7 +72,6 @@ export default function App() {
       <Topbar />
       <div className={styles.body}>
 
-        {/* Left — filter sidebar */}
         <FilterPanel
           filters={filters}
           updateFilter={updateFilter}
@@ -51,7 +80,6 @@ export default function App() {
           activeCount={activeCount}
         />
 
-        {/* Centre — KPIs + charts/table */}
         <main className={styles.main}>
           <div className={styles.kpiRow}>
             <KpiRow kpis={kpis} />
@@ -75,17 +103,19 @@ export default function App() {
           </div>
         </main>
 
-        {/* Right — permanent report panel */}
-        <ReportPanel
-          items={reportItems}
-          onRemove={removeFromReport}
-          onClear={clearReport}
-        />
-
       </div>
 
-      {/* Floating AI chat bubble (outside body flow) */}
-      <AiChat reportItems={reportItems} onAddToReport={addToReport} />
+      <ReportPanel
+        reports={reports}
+        activeReportId={activeReportId}
+        onSetActive={setActiveReportId}
+        onNewReport={addNewReport}
+        onDeleteReport={deleteReport}
+        onRemove={removeFromReport}
+        onClear={clearReport}
+        chartData={{ feedback: filteredFeedback, improvements: filteredImprovements }}
+      />
+      <AiChat reportItems={activeReport?.items || []} onAddToReport={addToReport} />
     </div>
   )
 }

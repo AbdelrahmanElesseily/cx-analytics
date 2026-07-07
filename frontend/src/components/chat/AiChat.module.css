@@ -59,7 +59,7 @@
   right: 28px;
   z-index: 499;
   width: 360px;
-  height: 520px;
+  height: 500px;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -82,6 +82,7 @@
   justify-content: space-between;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
+  border-top: 3px solid var(--gold);
   background: var(--surface-2);
   flex-shrink: 0;
 }

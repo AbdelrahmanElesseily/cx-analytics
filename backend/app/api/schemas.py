@@ -44,5 +44,11 @@ class ReportItem(BaseModel):
     data:     dict[str, Any] = {}
 
 
+class ChartData(BaseModel):
+    feedback:     list[dict[str, Any]] = []
+    improvements: list[dict[str, Any]] = []
+
+
 class ReportRequest(BaseModel):
-    items: list[ReportItem] = Field(..., min_length=1)
+    items:      list[ReportItem] = Field(..., min_length=1)
+    chart_data: ChartData | None = None
