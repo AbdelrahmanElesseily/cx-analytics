@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, Send, RotateCcw, Database, BookOpen, MessageCircle } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import InlineChart from '../shared/InlineChart'
 import styles from './AiChat.module.css'
 
 const SUGGESTIONS = [
@@ -11,14 +11,6 @@ const SUGGESTIONS = [
   'Summarize the main themes in Q3 feedback',
   'What are the recurring problems on the Website?',
 ]
-
-const CHART_COLORS = ['#4F46E5','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4','#84CC16']
-
-const tipStyle = {
-  backgroundColor:'#fff', border:'1px solid #E2E8F0',
-  borderRadius:8, fontSize:11, color:'#111827',
-  boxShadow:'0 4px 12px rgba(0,0,0,0.08)',
-}
 
 async function callAPI(question) {
   const res = await fetch('http://localhost:8000/api/query', {
@@ -33,56 +25,6 @@ async function callAPI(question) {
   return res.json()
 }
 
-function detectChartData(data) {
-  if (!data?.rows?.length || !data?.columns?.length) return null
-  const numCols = data.columns.filter(c => {
-    const vals = data.rows.map(r => r[c])
-    return vals.every(v => v !== null && v !== undefined && !isNaN(Number(v)))
-  })
-  const catCols = data.columns.filter(c => !numCols.includes(c))
-  if (numCols.length === 0 || catCols.length === 0) return null
-  return { labelKey: catCols[0], valueKey: numCols[0] }
-}
-
-function InlineChart({ data }) {
-  const chart = detectChartData(data)
-  if (!chart) return null
-  const chartData = data.rows.slice(0, 8).map(r => ({
-    name: String(r[chart.labelKey] ?? '').slice(0, 14),
-    value: Number(r[chart.valueKey]),
-  }))
-  const isHorizontal = chartData.length > 4
-
-  return (
-    <div className={styles.inlineChart}>
-      <span className={styles.inlineChartLabel}>{chart.valueKey} by {chart.labelKey}</span>
-      <ResponsiveContainer width="100%" height={isHorizontal ? chartData.length * 22 + 16 : 100}>
-        {isHorizontal
-          ? (
-            <BarChart data={chartData} layout="vertical" margin={{left:0,right:8,top:4,bottom:0}}>
-              <XAxis type="number" tick={{fontSize:9,fill:'#94A3B8'}} axisLine={false} tickLine={false}/>
-              <YAxis type="category" dataKey="name" tick={{fontSize:9,fill:'#64748B'}} axisLine={false} tickLine={false} width={70}/>
-              <Tooltip contentStyle={tipStyle} formatter={v=>[v, chart.valueKey]}/>
-              <Bar dataKey="value" radius={[0,4,4,0]}>
-                {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]}/>)}
-              </Bar>
-            </BarChart>
-          )
-          : (
-            <BarChart data={chartData} margin={{left:-8,right:4,top:4,bottom:0}}>
-              <XAxis dataKey="name" tick={{fontSize:9,fill:'#94A3B8'}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:9,fill:'#94A3B8'}} axisLine={false} tickLine={false} width={22}/>
-              <Tooltip contentStyle={tipStyle} formatter={v=>[v, chart.valueKey]}/>
-              <Bar dataKey="value" radius={[4,4,0,0]}>
-                {chartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]}/>)}
-              </Bar>
-            </BarChart>
-          )
-        }
-      </ResponsiveContainer>
-    </div>
-  )
-}
 
 function RagAnswer({ data }) {
   return (
@@ -131,10 +73,11 @@ function NlqAnswer({ data }) {
   )
 }
 
-function Message({ msg, inReport, onAddToReport, reportMenu, setReportMenu }) {
-  const isUser = msg.role === 'user'
-  const isAi   = msg.role === 'ai' && msg.mode !== 'error'
+function Message({ msg, reports, activeReportId, onAddToReportId, onAddNewReport, reportMenu, setReportMenu }) {
+  const isUser   = msg.role === 'user'
+  const isAi     = msg.role === 'ai' && msg.mode !== 'error'
   const menuOpen = reportMenu === msg.id
+  const isInReport = r => r.sections.some(s => s.type === 'finding' && s.msgId === msg.id)
 
   if (isUser) {
     return (
@@ -164,14 +107,41 @@ function Message({ msg, inReport, onAddToReport, reportMenu, setReportMenu }) {
         </div>
 
         {isAi && (
-          <div className={styles.reportBtnRow}>
-            <button
-              className={`${styles.addReportBtn} ${inReport ? styles.addReportBtnAdded : ''}`}
-              onClick={() => { if (!inReport) onAddToReport(msg) }}
-              title={inReport ? 'Added to report' : 'Add to report'}
-            >
-              {inReport ? '✓ In report' : '+ Report'}
-            </button>
+          <div className={styles.reportBtnRow} style={{position:'relative'}}>
+            <>
+              <button
+                className={styles.addReportBtn}
+                onClick={e => { e.stopPropagation(); setReportMenu(menuOpen ? null : msg.id) }}
+              >
+                + Report ▾
+              </button>
+              {menuOpen && (
+                <div className={styles.reportMenu} onClick={e => e.stopPropagation()}>
+                  <p className={styles.reportMenuLabel}>Add to report</p>
+                  {reports.map(r => {
+                    const already = isInReport(r)
+                    const count = r.sections.filter(s => s.type === 'finding').length
+                    return (
+                      <button
+                        key={r.id}
+                        className={`${styles.reportMenuItem} ${r.id === activeReportId ? styles.reportMenuItemActive : ''} ${already ? styles.reportMenuItemDone : ''}`}
+                        onClick={() => { if (!already) { onAddToReportId(msg, r.id); setReportMenu(null) } }}
+                        disabled={already}
+                      >
+                        <span className={styles.reportMenuName}>{r.name}</span>
+                        <span className={styles.reportMenuCount}>{already ? '✓ added' : `${count} item${count !== 1 ? 's' : ''}`}</span>
+                      </button>
+                    )
+                  })}
+                  <button
+                    className={`${styles.reportMenuItem} ${styles.reportMenuNew}`}
+                    onClick={() => { onAddNewReport(msg); setReportMenu(null) }}
+                  >
+                    <span>+ New report</span>
+                  </button>
+                </div>
+              )}
+            </>
           </div>
         )}
       </div>
@@ -179,7 +149,7 @@ function Message({ msg, inReport, onAddToReport, reportMenu, setReportMenu }) {
   )
 }
 
-export default function AiChat({ reportItems, onAddToReport }) {
+export default function AiChat({ reportItems, reports, activeReportId, onAddToReportId, onAddNewReport }) {
   const [open,     setOpen]     = useState(false)
   const [input,    setInput]    = useState('')
   const [messages, setMessages] = useState([])
@@ -279,8 +249,10 @@ export default function AiChat({ reportItems, onAddToReport }) {
               <Message
                 key={msg.id}
                 msg={msg}
-                inReport={reportItems.some(i => i.msgId === msg.id)}
-                onAddToReport={m => onAddToReport(m)}
+                reports={reports}
+                activeReportId={activeReportId}
+                onAddToReportId={onAddToReportId}
+                onAddNewReport={onAddNewReport}
                 reportMenu={reportMenu}
                 setReportMenu={setReportMenu}
               />

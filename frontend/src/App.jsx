@@ -1,21 +1,31 @@
 import { useState } from 'react'
 import { BarChart2, Table2 } from 'lucide-react'
-import Topbar         from './components/layout/Topbar'
-import KpiRow         from './components/layout/KpiRow'
-import FilterPanel    from './components/filters/FilterPanel'
-import ChartsPanel    from './components/charts/ChartsPanel'
-import DataTables     from './components/table/ReservationsTable'
-import AiChat         from './components/chat/AiChat'
-import ReportPanel    from './components/report/ReportPanel'
-import { useFilters } from './hooks/useFilters'
-import styles         from './App.module.css'
+import Topbar           from './components/layout/Topbar'
+import KpiRow           from './components/layout/KpiRow'
+import FilterPanel      from './components/filters/FilterPanel'
+import ChartsPanel      from './components/charts/ChartsPanel'
+import DataTables       from './components/table/ReservationsTable'
+import AiChat           from './components/chat/AiChat'
+import ReportEditorPage from './components/report/ReportEditorPage'
+import { useFilters }   from './hooks/useFilters'
+import styles           from './App.module.css'
+
+function makeReport(n) {
+  return {
+    id: Date.now() + n,
+    name: `Report ${n}`,
+    sections: [],
+    cover: { title: 'CX Analytics Report', author: '', department: '', date: '' },
+    includeCharts: false,
+  }
+}
 
 export default function App() {
-  const [view,      setView]      = useState('charts')
-  const [activeTab, setActiveTab] = useState('improvements')
-
-  const [reports,        setReports]        = useState([{ id: 1, name: 'Report 1', items: [] }])
-  const [activeReportId, setActiveReportId] = useState(1)
+  const [view,        setView]        = useState('charts')
+  const [activeTab,   setActiveTab]   = useState('improvements')
+  const [showEditor,  setShowEditor]  = useState(false)
+  const [reports,        setReports]        = useState([makeReport(1)])
+  const [activeReportId, setActiveReportId] = useState(reports[0].id)
 
   const {
     filters, filteredFeedback, filteredImprovements, kpis,
@@ -23,42 +33,63 @@ export default function App() {
   } = useFilters()
 
   const activeReport = reports.find(r => r.id === activeReportId) || reports[0]
+  const chartData    = { feedback: filteredFeedback, improvements: filteredImprovements }
 
-  function addToReport(msg) {
-    setReports(prev => prev.map(r =>
-      r.id === activeReportId
-        ? r.items.find(i => i.msgId === msg.id)
-          ? r
-          : { ...r, items: [...r.items, { msgId: msg.id, question: msg.question, mode: msg.mode, data: msg.data }] }
-        : r
-    ))
+  function updateReport(id, patch) {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r))
   }
 
-  function removeFromReport(msgId) {
+  function addToReportId(msg, reportId) {
+    setReports(prev => prev.map(r => {
+      if (r.id !== reportId) return r
+      if (r.sections.find(s => s.type === 'finding' && s.msgId === msg.id)) return r
+      return {
+        ...r,
+        sections: [...r.sections, {
+          type: 'finding', msgId: msg.id,
+          question: msg.question, mode: msg.mode, data: msg.data, note: '',
+        }],
+      }
+    }))
+  }
+
+  function addToReport(msg) { addToReportId(msg, activeReportId) }
+
+  function addToNewReport(msg) {
+    const r = makeReport(reports.length + 1)
+    setReports(prev => [...prev, {
+      ...r,
+      sections: [{
+        type: 'finding', msgId: msg.id,
+        question: msg.question, mode: msg.mode, data: msg.data, note: '',
+      }],
+    }])
+    setActiveReportId(r.id)
+  }
+
+  function removeSection(msgId) {
     setReports(prev => prev.map(r =>
       r.id === activeReportId
-        ? { ...r, items: r.items.filter(i => i.msgId !== msgId) }
+        ? { ...r, sections: r.sections.filter(s => !(s.type === 'finding' && s.msgId === msgId)) }
         : r
     ))
   }
 
   function clearReport() {
-    setReports(prev => prev.map(r =>
-      r.id === activeReportId ? { ...r, items: [] } : r
-    ))
+    updateReport(activeReportId, { sections: [] })
   }
 
   function addNewReport() {
-    const newId = Date.now()
-    setReports(prev => [...prev, { id: newId, name: `Report ${prev.length + 1}`, items: [] }])
-    setActiveReportId(newId)
+    const r = makeReport(reports.length + 1)
+    setReports(prev => [...prev, r])
+    setActiveReportId(r.id)
   }
 
   function deleteReport(id) {
     setReports(prev => {
       const remaining = prev.filter(r => r.id !== id)
       if (remaining.length === 0) {
-        const fresh = { id: Date.now(), name: 'Report 1', items: [] }
+        const fresh = makeReport(1)
         setActiveReportId(fresh.id)
         return [fresh]
       }
@@ -69,7 +100,10 @@ export default function App() {
 
   return (
     <div className={styles.root}>
-      <Topbar />
+      <Topbar
+        reportCount={reports.reduce((s, r) => s + r.sections.filter(x => x.type === 'finding').length, 0)}
+        onOpenReport={() => setShowEditor(true)}
+      />
       <div className={styles.body}>
 
         <FilterPanel
@@ -81,9 +115,7 @@ export default function App() {
         />
 
         <main className={styles.main}>
-          <div className={styles.kpiRow}>
-            <KpiRow kpis={kpis} />
-          </div>
+          <div className={styles.kpiRow}><KpiRow kpis={kpis} /></div>
           <div className={styles.toolbar}>
             <div className={styles.tabs}>
               <button className={`${styles.tab} ${view==='charts'?styles.tabActive:''}`} onClick={()=>setView('charts')}>
@@ -102,20 +134,28 @@ export default function App() {
             }
           </div>
         </main>
-
       </div>
 
-      <ReportPanel
+<AiChat
+        reportItems={activeReport?.sections || []}
         reports={reports}
         activeReportId={activeReportId}
-        onSetActive={setActiveReportId}
-        onNewReport={addNewReport}
-        onDeleteReport={deleteReport}
-        onRemove={removeFromReport}
-        onClear={clearReport}
-        chartData={{ feedback: filteredFeedback, improvements: filteredImprovements }}
+        onAddToReportId={addToReportId}
+        onAddNewReport={addToNewReport}
       />
-      <AiChat reportItems={activeReport?.items || []} onAddToReport={addToReport} />
+
+      {showEditor && (
+        <ReportEditorPage
+          reports={reports}
+          activeReportId={activeReportId}
+          onSetActive={setActiveReportId}
+          onNewReport={addNewReport}
+          onDeleteReport={deleteReport}
+          onUpdateReport={updateReport}
+          chartData={chartData}
+          onClose={() => setShowEditor(false)}
+        />
+      )}
     </div>
   )
 }

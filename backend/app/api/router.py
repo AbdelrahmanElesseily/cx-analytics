@@ -118,10 +118,17 @@ async def suggestions():
 @router.post("/report")
 async def generate_report(request: ReportRequest):
     try:
-        items = [item.model_dump() for item in request.items]
+        sections     = [s.model_dump() for s in request.sections]
+        cover        = request.cover.model_dump()
         feedback     = request.chart_data.feedback     if request.chart_data else []
         improvements = request.chart_data.improvements if request.chart_data else []
-        doc_bytes = build_report(items, feedback=feedback, improvements=improvements)
+        doc_bytes = build_report(
+            sections,
+            cover=cover,
+            include_charts=request.include_charts,
+            feedback=feedback,
+            improvements=improvements,
+        )
     except Exception as exc:
         logger.error("Report generation failed: %s", exc)
         raise HTTPException(status_code=500, detail=f"Report error: {exc}")

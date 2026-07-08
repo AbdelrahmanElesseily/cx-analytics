@@ -43,6 +43,49 @@
   text-transform: uppercase;
 }
 
+/* ── Action buttons ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reportBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 20px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.reportBtn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: rgba(99,102,241,0.4);
+}
+
+
+.badge {
+  background: #6366F1;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
 .meta {
   display: flex;
   align-items: center;
