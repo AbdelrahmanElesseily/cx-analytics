@@ -30,8 +30,8 @@ const tip = {
   boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
 }
 
-const axisLight = { fill: '#9CA3AF', fontSize: 11 }
-const axisGrey  = { fill: '#D1D5DB', fontSize: 11 }
+const axisLight = { fill: '#9CA3AF', fontSize: 9 }
+const axisGrey  = { fill: '#D1D5DB', fontSize: 9 }
 
 function WrappedTick({ x, y, payload, width }) {
   const words = payload.value.split(' ')
@@ -116,7 +116,7 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <h3 className={styles.cardTitle}>Avg Satisfaction by Channel</h3>
           <span className={styles.cardBadge} style={{color:GOLD,background:'rgba(184,134,11,0.08)',border:'1px solid rgba(184,134,11,0.2)'}}>Rating</span>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={150}>
           <BarChart data={ratingByChannel} margin={{left:-8,right:8,top:8,bottom:8}} barCategoryGap="35%">
             <XAxis dataKey="name" tick={<WrappedTick/>} axisLine={false} tickLine={false} interval={0} height={44}/>
             <YAxis domain={[0,5]} tick={axisLight} axisLine={false} tickLine={false} width={24}/>
@@ -132,7 +132,7 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <h3 className={styles.cardTitle}>Improvement Actions by Quarter</h3>
           <span className={styles.cardBadge} style={{color:BLUE,background:'rgba(37,99,235,0.08)',border:'1px solid rgba(37,99,235,0.2)'}}>Trend</span>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={150}>
           <BarChart data={actionsByQuarter} margin={{left:-8,right:8,top:8,bottom:24}} barCategoryGap="35%">
             <XAxis dataKey="quarter" tick={axisLight} axisLine={false} tickLine={false} interval={0}/>
             <YAxis tick={axisLight} axisLine={false} tickLine={false} width={24}/>
@@ -149,9 +149,9 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <span className={styles.cardBadge} style={{color:PURPLE,background:'rgba(124,58,237,0.08)',border:'1px solid rgba(124,58,237,0.2)'}}>Stage</span>
         </div>
         <div className={styles.pieWrap}>
-          <ResponsiveContainer width="50%" height={180}>
+          <ResponsiveContainer width="50%" height={130}>
             <PieChart>
-              <Pie data={byCxStage} dataKey="value" cx="50%" cy="50%" innerRadius={46} outerRadius={72} paddingAngle={3}>
+              <Pie data={byCxStage} dataKey="value" cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={3}>
                 {byCxStage.map(e=><Cell key={e.name} fill={STAGE_COLORS[e.name]||SLATE}/>)}
               </Pie>
               <Tooltip contentStyle={tip}/>
@@ -175,7 +175,7 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <h3 className={styles.cardTitle}>Feedback Rating Distribution</h3>
           <span className={styles.cardBadge} style={{color:GREEN,background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)'}}>Score</span>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={150}>
           <BarChart data={ratingDist} margin={{left:-8,right:8,top:8,bottom:24}} barCategoryGap="35%">
             <XAxis dataKey="rating" tick={{...axisLight, fontSize:14}} axisLine={false} tickLine={false} interval={0}/>
             <YAxis tick={axisLight} axisLine={false} tickLine={false} width={24}/>
@@ -191,7 +191,7 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <h3 className={styles.cardTitle}>Improvement Actions by Channel</h3>
           <span className={styles.cardBadge} style={{color:AMBER,background:'rgba(217,119,6,0.08)',border:'1px solid rgba(217,119,6,0.2)'}}>Channel</span>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={150}>
           <BarChart data={byChannel} layout="vertical" margin={{left:0,right:16,top:4,bottom:0}}>
             <XAxis type="number" tick={axisLight} axisLine={false} tickLine={false}/>
             <YAxis type="category" dataKey="name" tick={axisLight} axisLine={false} tickLine={false} width={120}/>
@@ -207,7 +207,7 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
           <h3 className={styles.cardTitle}>Improvement Actions by Source</h3>
           <span className={styles.cardBadge} style={{color:GREEN,background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)'}}>Source</span>
         </div>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={150}>
           <BarChart data={bySource} layout="vertical" margin={{left:0,right:16,top:4,bottom:0}}>
             <XAxis type="number" tick={axisLight} axisLine={false} tickLine={false}/>
             <YAxis type="category" dataKey="name" tick={axisLight} axisLine={false} tickLine={false} width={120}/>
