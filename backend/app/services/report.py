@@ -159,7 +159,7 @@ def build_report(
         doc.add_page_break()
 
     # ── Sections ────────────────────────────────────────────────────────────
-    findings = [s for s in sections if s.get('type') != 'custom']
+    findings = [s for s in sections if s.get('type') == 'finding']
     if findings:
         doc.add_heading('AI Assistant Findings', level=1)
         doc.add_paragraph('')
@@ -173,6 +173,31 @@ def build_report(
             doc.add_heading(sec_title, level=2)
             if sec.get('content'):
                 doc.add_paragraph(sec['content'])
+            doc.add_paragraph('')
+            continue
+
+        if stype == 'chart':
+            chart_title = sec.get('chartTitle', 'Dashboard Chart')
+            doc.add_heading(chart_title, level=2)
+            rows = sec.get('data', [])
+            data_key = sec.get('dataKey', '')
+            label_key = sec.get('labelKey', '')
+            chart_type = sec.get('chartType', 'bar')
+            if rows and data_key and label_key:
+                names  = [str(r.get(label_key, ''))[:22] for r in rows]
+                values = [float(r.get(data_key, 0)) for r in rows]
+                horizontal = chart_type in ('hbar',) or len(names) > 5
+                fig, ax = plt.subplots(figsize=(7, max(2.8, len(names) * 0.42)))
+                colors = [_BLUE, _GOLD, _GREEN, _PURPLE, _AMBER, _GREEN, _SLATE, _BLUE]
+                bar_colors = [colors[i % len(colors)] for i in range(len(names))]
+                if horizontal:
+                    ax.barh(names, values, color=bar_colors, alpha=0.85)
+                else:
+                    ax.bar(names, values, color=bar_colors, alpha=0.85)
+                    ax.tick_params(axis='x', labelrotation=30, labelsize=8)
+                ax.set_title(chart_title, fontweight='bold', fontsize=11)
+                ax.tick_params(labelsize=8)
+                doc.add_picture(io.BytesIO(_save(fig)), width=Inches(5.8))
             doc.add_paragraph('')
             continue
 

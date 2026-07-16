@@ -97,6 +97,25 @@ function FindingCard({ item, index, total, onMove, onRemove, onNoteChange }) {
   )
 }
 
+function ChartCard({ item, index, total, onMove, onRemove }) {
+  return (
+    <div className={`${styles.itemCard} ${styles.chartCard}`}>
+      <div className={styles.itemDrag}>
+        <GripVertical size={14} className={styles.gripIcon}/>
+        <span className={styles.chartCardLabel}><BarChart2 size={10}/> Chart</span>
+        <div className={styles.itemActions}>
+          <button className={styles.actionBtn} onClick={() => onMove(-1)} disabled={index === 0}><ChevronUp size={13}/></button>
+          <button className={styles.actionBtn} onClick={() => onMove(1)} disabled={index === total - 1}><ChevronDown size={13}/></button>
+          <button className={`${styles.actionBtn} ${styles.actionDel}`} onClick={onRemove}><X size={13}/></button>
+        </div>
+      </div>
+      <div className={styles.itemBody}>
+        <p className={styles.itemQ}>{item.chartTitle}</p>
+      </div>
+    </div>
+  )
+}
+
 function CustomCard({ item, index, total, onMove, onRemove, onChange }) {
   return (
     <div className={`${styles.itemCard} ${styles.customCard}`}>
@@ -184,16 +203,32 @@ function DocPreview({ report, chartData }) {
         </>
       )}
 
-      {/* Findings — one page per finding */}
-      {findings.length > 0 && sections.map((sec, i) => {
+      {/* Findings + charts + custom sections */}
+      {sections.length > 0 && sections.map((sec, i) => {
         if (sec.type === 'custom') {
-          pageNum++
+          const pg = pageNum++
           return (
             <div key={sec.id}>
-              <PageBreak label={`Page ${pageNum - 1} — ${sec.sectionTitle || 'Custom Section'}`}/>
-              <Page pageNum={pageNum - 1}>
+              <PageBreak label={`Page ${pg} — ${sec.sectionTitle || 'Custom Section'}`}/>
+              <Page pageNum={pg}>
                 <h2 className={styles.paperH2}>{sec.sectionTitle || 'Custom Section'}</h2>
                 {sec.content && <p className={styles.paperBody}>{sec.content}</p>}
+              </Page>
+            </div>
+          )
+        }
+        if (sec.type === 'chart') {
+          const pg = pageNum++
+          return (
+            <div key={sec.chartId || sec.id}>
+              <PageBreak label={`Page ${pg} — ${sec.chartTitle}`}/>
+              <Page pageNum={pg}>
+                <div className={styles.paperFindingHeader}>
+                  <span className={styles.paperFindingNum}>Chart</span>
+                  <span className={`${styles.paperModeBadge} ${styles.paperModeSql}`}>Dashboard</span>
+                </div>
+                <h2 className={styles.paperH2}>{sec.chartTitle}</h2>
+                <InlineChart data={sec} style={{marginBottom: 16}}/>
               </Page>
             </div>
           )
@@ -358,7 +393,7 @@ export default function ReportEditorPage({
           <div className={styles.divider}><hr/><span>Dashboard charts</span><hr/></div>
           <ChartsToggle checked={report.includeCharts} onChange={v => patchReport({ includeCharts: v })}/>
 
-          <div className={styles.divider}><hr/><span>AI findings ({findings.length})</span><hr/></div>
+          <div className={styles.divider}><hr/><span>Sections ({sections.length})</span><hr/></div>
 
           {sections.length === 0 && (
             <div className={styles.emptyFindings}>
@@ -369,13 +404,20 @@ export default function ReportEditorPage({
 
           {sections.map((sec, idx) => {
             const fNum = sections.slice(0, idx).filter(s => s.type === 'finding').length
-            return sec.type === 'finding'
-              ? <FindingCard key={sec.msgId} item={sec} index={fNum} total={findings.length}
-                  onMove={dir => moveSectionAt(idx, dir)} onRemove={() => patchReport({ sections: sections.filter((_,i) => i !== idx) })}
-                  onNoteChange={note => updateSection(idx, { note })}/>
-              : <CustomCard key={sec.id} item={sec} index={idx} total={sections.length}
-                  onMove={dir => moveSectionAt(idx, dir)} onRemove={() => patchReport({ sections: sections.filter((_,i) => i !== idx) })}
-                  onChange={patch => updateSection(idx, patch)}/>
+            if (sec.type === 'finding') return (
+              <FindingCard key={sec.msgId} item={sec} index={fNum} total={findings.length}
+                onMove={dir => moveSectionAt(idx, dir)} onRemove={() => patchReport({ sections: sections.filter((_,i) => i !== idx) })}
+                onNoteChange={note => updateSection(idx, { note })}/>
+            )
+            if (sec.type === 'chart') return (
+              <ChartCard key={sec.chartId || sec.id} item={sec} index={idx} total={sections.length}
+                onMove={dir => moveSectionAt(idx, dir)} onRemove={() => patchReport({ sections: sections.filter((_,i) => i !== idx) })}/>
+            )
+            return (
+              <CustomCard key={sec.id} item={sec} index={idx} total={sections.length}
+                onMove={dir => moveSectionAt(idx, dir)} onRemove={() => patchReport({ sections: sections.filter((_,i) => i !== idx) })}
+                onChange={patch => updateSection(idx, patch)}/>
+            )
           })}
 
         </div>

@@ -45,6 +45,78 @@
   letter-spacing: 0.04em;
 }
 
+/* ── Card actions row ────────────────────────────────────────────────────── */
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Chart report button ─────────────────────────────────────────────────── */
+.chartReportWrap { position: relative; }
+
+.chartReportBtn {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  transition: all 0.15s;
+  opacity: 0;
+}
+.card:hover .chartReportBtn { opacity: 1; }
+.chartReportBtn:hover { border-color: rgba(99,102,241,0.4); color: #6366F1; background: rgba(99,102,241,0.06); }
+
+.chartReportMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+  z-index: 600;
+  overflow: hidden;
+}
+.chartReportLabel {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  padding: 7px 10px 5px;
+}
+.chartReportItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background 0.1s;
+  gap: 8px;
+}
+.chartReportItem:hover { background: var(--surface-2); }
+.chartReportItemActive { background: rgba(99,102,241,0.04); }
+.chartReportItemDone { opacity: 0.45; cursor: default; }
+.chartReportMeta { font-size: 9px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
+.chartReportNew { color: #6366F1; }
+.chartReportNew:hover { background: rgba(99,102,241,0.06); }
+
 /* ── Pie layout ──────────────────────────────────────────────────────────── */
 .pieWrap {
   display: flex;

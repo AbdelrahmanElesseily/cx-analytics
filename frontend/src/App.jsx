@@ -55,6 +55,20 @@ export default function App() {
 
   function addToReport(msg) { addToReportId(msg, activeReportId) }
 
+  function addChartToReportId(chart, reportId) {
+    setReports(prev => prev.map(r => {
+      if (r.id !== reportId) return r
+      if (r.sections.find(s => s.type === 'chart' && s.chartId === chart.chartId)) return r
+      return { ...r, sections: [...r.sections, { type: 'chart', id: Date.now(), ...chart }] }
+    }))
+  }
+
+  function addChartToNewReport(chart) {
+    const r = makeReport(reports.length + 1)
+    setReports(prev => [...prev, { ...r, sections: [{ type: 'chart', id: Date.now(), ...chart }] }])
+    setActiveReportId(r.id)
+  }
+
   function addToNewReport(msg) {
     const r = makeReport(reports.length + 1)
     setReports(prev => [...prev, {
@@ -129,7 +143,14 @@ export default function App() {
           </div>
           <div className={styles.content}>
             {view === 'charts'
-              ? <ChartsPanel filteredFeedback={filteredFeedback} filteredImprovements={filteredImprovements}/>
+              ? <ChartsPanel
+                  filteredFeedback={filteredFeedback}
+                  filteredImprovements={filteredImprovements}
+                  reports={reports}
+                  activeReportId={activeReportId}
+                  onAddChartToReportId={addChartToReportId}
+                  onAddChartToNewReport={addChartToNewReport}
+                />
               : <DataTables  filteredFeedback={filteredFeedback} filteredImprovements={filteredImprovements} activeTab={activeTab} setTab={setActiveTab}/>
             }
           </div>

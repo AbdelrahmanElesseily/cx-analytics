@@ -555,6 +555,8 @@
 }
 
 .customCard { border-color: rgba(99,102,241,0.25); }
+.chartCard { border-color: rgba(5,150,105,0.25); }
+.chartCardLabel { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #059669; text-transform: uppercase; letter-spacing: 0.06em; }
 
 .itemDrag {
   display: flex;

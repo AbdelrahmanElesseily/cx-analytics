@@ -19,6 +19,45 @@ export function detectChartData(data) {
 }
 
 export default function InlineChart({ data, style }) {
+  // Dashboard snapshot format: { data: [...], dataKey, labelKey }
+  if (data?.dataKey && data?.labelKey && Array.isArray(data?.data)) {
+    const rows = data.data.slice(0, 12)
+    const isHorizontal = data.chartType === 'hbar' || rows.length > 5
+    const chartRows = rows.map(r => ({
+      name: String(r[data.labelKey] ?? '').slice(0, 16),
+      value: Number(r[data.dataKey]),
+    }))
+    return (
+      <div style={{ marginTop: 8, ...style }}>
+        <p style={{ fontSize: 9, color: '#94A3B8', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {data.dataKey} by {data.labelKey}
+        </p>
+        <ResponsiveContainer width="100%" height={isHorizontal ? chartRows.length * 26 + 16 : 130}>
+          {isHorizontal ? (
+            <BarChart data={chartRows} layout="vertical" margin={{left:0,right:8,top:4,bottom:0}}>
+              <XAxis type="number" tick={{fontSize:9,fill:'#94A3B8'}} axisLine={false} tickLine={false}/>
+              <YAxis type="category" dataKey="name" tick={{fontSize:9,fill:'#64748B'}} axisLine={false} tickLine={false} width={100}/>
+              <Tooltip contentStyle={tipStyle} formatter={v=>[v, data.dataKey]}/>
+              <Bar dataKey="value" radius={[0,4,4,0]}>
+                {chartRows.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]}/>)}
+              </Bar>
+            </BarChart>
+          ) : (
+            <BarChart data={chartRows} margin={{left:-8,right:4,top:4,bottom:0}}>
+              <XAxis dataKey="name" tick={{fontSize:9,fill:'#94A3B8'}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fontSize:9,fill:'#94A3B8'}} axisLine={false} tickLine={false} width={22}/>
+              <Tooltip contentStyle={tipStyle} formatter={v=>[v, data.dataKey]}/>
+              <Bar dataKey="value" radius={[4,4,0,0]}>
+                {chartRows.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]}/>)}
+              </Bar>
+            </BarChart>
+          )}
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
+  // SQL result format: { rows, columns }
   const chart = detectChartData(data)
   if (!chart) return null
   const chartData = data.rows.slice(0, 8).map(r => ({

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -33,6 +33,50 @@ const tip = {
 const axisLight = { fill: '#9CA3AF', fontSize: 9 }
 const axisGrey  = { fill: '#D1D5DB', fontSize: 9 }
 
+function ChartReportBtn({ chart, reports, activeReportId, onAddChartToReportId, onAddChartToNewReport }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const close = e => { if (!ref.current?.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+
+  const isInReport = r => r.sections.some(s => s.type === 'chart' && s.chartId === chart.chartId)
+
+  return (
+    <div className={styles.chartReportWrap} ref={ref}>
+      <button className={styles.chartReportBtn} onClick={e => { e.stopPropagation(); setOpen(o => !o) }}>
+        + Report ▾
+      </button>
+      {open && (
+        <div className={styles.chartReportMenu}>
+          <p className={styles.chartReportLabel}>Add chart to report</p>
+          {reports.map(r => {
+            const already = isInReport(r)
+            return (
+              <button
+                key={r.id}
+                className={`${styles.chartReportItem} ${r.id === activeReportId ? styles.chartReportItemActive : ''} ${already ? styles.chartReportItemDone : ''}`}
+                disabled={already}
+                onClick={() => { onAddChartToReportId(chart, r.id); setOpen(false) }}
+              >
+                <span>{r.name}</span>
+                <span className={styles.chartReportMeta}>{already ? '✓ added' : `${r.sections.filter(s=>s.type==='chart').length} charts`}</span>
+              </button>
+            )
+          })}
+          <button className={`${styles.chartReportItem} ${styles.chartReportNew}`} onClick={() => { onAddChartToNewReport(chart); setOpen(false) }}>
+            + New report
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function WrappedTick({ x, y, payload, width }) {
   const words = payload.value.split(' ')
   const mid = Math.ceil(words.length / 2)
@@ -48,7 +92,8 @@ function WrappedTick({ x, y, payload, width }) {
   )
 }
 
-export default function ChartsPanel({ filteredFeedback, filteredImprovements }) {
+export default function ChartsPanel({ filteredFeedback, filteredImprovements, reports=[], activeReportId, onAddChartToReportId, onAddChartToNewReport }) {
+  const reportProps = { reports, activeReportId, onAddChartToReportId, onAddChartToNewReport }
   const ratingByChannel = useMemo(() => {
     const map = {}
     filteredFeedback.forEach(r => {
@@ -114,7 +159,10 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Avg Satisfaction by Channel</h3>
-          <span className={styles.cardBadge} style={{color:GOLD,background:'rgba(184,134,11,0.08)',border:'1px solid rgba(184,134,11,0.2)'}}>Rating</span>
+          <div className={styles.cardActions}>
+            <span className={styles.cardBadge} style={{color:GOLD,background:'rgba(184,134,11,0.08)',border:'1px solid rgba(184,134,11,0.2)'}}>Rating</span>
+            {onAddChartToReportId && <ChartReportBtn chart={{chartId:'ratingByChannel',chartTitle:'Avg Satisfaction by Channel',chartType:'bar',data:ratingByChannel,dataKey:'avg',labelKey:'name'}} {...reportProps}/>}
+          </div>
         </div>
         <ResponsiveContainer width="100%" height={150}>
           <BarChart data={ratingByChannel} margin={{left:-8,right:8,top:8,bottom:8}} barCategoryGap="35%">
@@ -130,7 +178,10 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Improvement Actions by Quarter</h3>
-          <span className={styles.cardBadge} style={{color:BLUE,background:'rgba(37,99,235,0.08)',border:'1px solid rgba(37,99,235,0.2)'}}>Trend</span>
+          <div className={styles.cardActions}>
+            <span className={styles.cardBadge} style={{color:BLUE,background:'rgba(37,99,235,0.08)',border:'1px solid rgba(37,99,235,0.2)'}}>Trend</span>
+            {onAddChartToReportId && <ChartReportBtn chart={{chartId:'actionsByQuarter',chartTitle:'Improvement Actions by Quarter',chartType:'bar',data:actionsByQuarter,dataKey:'count',labelKey:'quarter'}} {...reportProps}/>}
+          </div>
         </div>
         <ResponsiveContainer width="100%" height={150}>
           <BarChart data={actionsByQuarter} margin={{left:-8,right:8,top:8,bottom:24}} barCategoryGap="35%">
@@ -146,7 +197,10 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Issues by CX Stage</h3>
-          <span className={styles.cardBadge} style={{color:PURPLE,background:'rgba(124,58,237,0.08)',border:'1px solid rgba(124,58,237,0.2)'}}>Stage</span>
+          <div className={styles.cardActions}>
+            <span className={styles.cardBadge} style={{color:PURPLE,background:'rgba(124,58,237,0.08)',border:'1px solid rgba(124,58,237,0.2)'}}>Stage</span>
+            {onAddChartToReportId && <ChartReportBtn chart={{chartId:'byCxStage',chartTitle:'Issues by CX Stage',chartType:'pie',data:byCxStage,dataKey:'value',labelKey:'name'}} {...reportProps}/>}
+          </div>
         </div>
         <div className={styles.pieWrap}>
           <ResponsiveContainer width="50%" height={130}>
@@ -173,7 +227,10 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Feedback Rating Distribution</h3>
-          <span className={styles.cardBadge} style={{color:GREEN,background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)'}}>Score</span>
+          <div className={styles.cardActions}>
+            <span className={styles.cardBadge} style={{color:GREEN,background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)'}}>Score</span>
+            {onAddChartToReportId && <ChartReportBtn chart={{chartId:'ratingDist',chartTitle:'Feedback Rating Distribution',chartType:'bar',data:ratingDist,dataKey:'count',labelKey:'rating'}} {...reportProps}/>}
+          </div>
         </div>
         <ResponsiveContainer width="100%" height={150}>
           <BarChart data={ratingDist} margin={{left:-8,right:8,top:8,bottom:24}} barCategoryGap="35%">
@@ -189,7 +246,10 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Improvement Actions by Channel</h3>
-          <span className={styles.cardBadge} style={{color:AMBER,background:'rgba(217,119,6,0.08)',border:'1px solid rgba(217,119,6,0.2)'}}>Channel</span>
+          <div className={styles.cardActions}>
+            <span className={styles.cardBadge} style={{color:AMBER,background:'rgba(217,119,6,0.08)',border:'1px solid rgba(217,119,6,0.2)'}}>Channel</span>
+            {onAddChartToReportId && <ChartReportBtn chart={{chartId:'byChannel',chartTitle:'Improvement Actions by Channel',chartType:'hbar',data:byChannel,dataKey:'count',labelKey:'name'}} {...reportProps}/>}
+          </div>
         </div>
         <ResponsiveContainer width="100%" height={150}>
           <BarChart data={byChannel} layout="vertical" margin={{left:0,right:16,top:4,bottom:0}}>
@@ -205,7 +265,10 @@ export default function ChartsPanel({ filteredFeedback, filteredImprovements }) 
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Improvement Actions by Source</h3>
-          <span className={styles.cardBadge} style={{color:GREEN,background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)'}}>Source</span>
+          <div className={styles.cardActions}>
+            <span className={styles.cardBadge} style={{color:GREEN,background:'rgba(5,150,105,0.08)',border:'1px solid rgba(5,150,105,0.2)'}}>Source</span>
+            {onAddChartToReportId && <ChartReportBtn chart={{chartId:'bySource',chartTitle:'Improvement Actions by Source',chartType:'hbar',data:bySource,dataKey:'count',labelKey:'name'}} {...reportProps}/>}
+          </div>
         </div>
         <ResponsiveContainer width="100%" height={150}>
           <BarChart data={bySource} layout="vertical" margin={{left:0,right:16,top:4,bottom:0}}>
