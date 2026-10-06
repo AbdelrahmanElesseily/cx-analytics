@@ -7,6 +7,8 @@
 ![Stack](https://img.shields.io/badge/LLM-GPT--4o--mini-412991?style=flat-square&logo=openai)
 ![Stack](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
+> 📘 **New to the project?** Read the full onboarding guide: [PROJECT_GUIDE.md](PROJECT_GUIDE.md)
+
 ---
 
 ## Overview
